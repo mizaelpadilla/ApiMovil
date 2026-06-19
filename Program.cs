@@ -20,10 +20,10 @@ builder.Services.AddDbContext<AppDbContext>(
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("Angular",
+    options.AddPolicy("AllowAngularApp",
         policy =>
         {
-            policy.AllowAnyOrigin()
+            policy.WithOrigins("http://localhost:4200")
                   .AllowAnyHeader()
                   .AllowAnyMethod();
         });
@@ -31,14 +31,14 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+app.UseCors("AllowAngularApp");
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
-app.UseCors("Angular");
 
 app.UseHttpsRedirection();
 

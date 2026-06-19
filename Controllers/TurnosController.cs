@@ -3,6 +3,7 @@ using ApiMovil.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
 namespace ApiMovil.Controllers
 {
@@ -17,11 +18,11 @@ namespace ApiMovil.Controllers
             _context = context;
         }
 
-        // GET: api/Turnos
         [HttpGet]
         public async Task<IActionResult> GetTurnos()
         {
             var turnos = await _context.Turnos
+                .Where(t => t.Estado == true)
                 .Include(t => t.HorarioLunes)
                 .Include(t => t.HorarioMartes)
                 .Include(t => t.HorarioMiercoles)
@@ -34,16 +35,41 @@ namespace ApiMovil.Controllers
             return Ok(turnos);
         }
 
-        // POST: api/Turnos
         [HttpPost]
         public async Task<IActionResult> PostTurno([FromBody] Turno turno)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
+            turno.Estado = true;
             _context.Turnos.Add(turno);
             await _context.SaveChangesAsync();
 
             return Ok(new { mensaje = "Turno configurado con éxito", id = turno.IdTurno });
+        }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> PutTurno(int id, [FromBody] Turno turno)
+        {
+            if (id != turno.IdTurno) return BadRequest();
+
+            turno.Estado = true; // Asegurar que al editar se mantenga activo o se reactive
+            _context.Entry(turno).State = EntityState.Modified;
+            await _context.SaveChangesAsync();
+
+            return Ok(new { mensaje = "Turno actualizado correctamente" });
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteTurno(int id)
+        {
+            var turno = await _context.Turnos.FindAsync(id);
+            if (turno == null) return NotFound();
+
+            // Soft Delete en lugar de Remove para evitar errores de integridad con Planificaciones
+            turno.Estado = false;
+            await _context.SaveChangesAsync();
+
+            return Ok(new { mensaje = "Turno desactivado correctamente" });
         }
     }
 }
